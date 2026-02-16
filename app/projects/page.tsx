@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
             Projelerim
           </h2>
           <p className="mt-4 text-zinc-400">
-            Mobil uygulamalar ve açık kaynak çalışmalarım.
+            Geliştirmiş olduğum ve geliştirmekte olduğum bazı projelerimi burada görebilirsiniz.
           </p>
         </div>
         
