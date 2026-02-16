@@ -5,26 +5,29 @@ import { Navigation } from "../components/nav";
 import { Card } from "../components/card";
 import { Article } from "./article";
 
-
 export const revalidate = 60;
-export default async function ProjectsPage() {
 
-  const featured = allProjects.find((project) => project.slug === "unkey")!;
-  const top2 = allProjects.find((project) => project.slug === "planetfall")!;
-  const top3 = allProjects.find((project) => project.slug === "highstorm")!;
-  const sorted = allProjects
-    .filter((p) => p.published)
-    .filter(
-      (project) =>
-        project.slug !== featured.slug &&
-        project.slug !== top2.slug &&
-        project.slug !== top3.slug,
-    )
+export default async function ProjectsPage() {
+  // 1. Öne çıkarmak istediğin projenin tam slug'ını buraya yaz (Dosya adın neyse o olmalı)
+  // Dosya adın 'zikir-plus.mdx' olduğu için burası 'zikir-plus' olmalı.
+  const featuredSlug = "zikir-plus"; 
+
+  // 2. Tüm yayınlanmış projeleri al ve tarihe göre sırala (En yeni en üstte)
+  const sortedProjects = allProjects
+    // .filter((p) => p.published)
     .sort(
       (a, b) =>
         new Date(b.date ?? Number.POSITIVE_INFINITY).getTime() -
         new Date(a.date ?? Number.POSITIVE_INFINITY).getTime(),
     );
+
+  // 3. Featured projeyi bulmaya çalış, bulamazsan listenin ilkini al (Hata vermesin diye)
+  const featured = sortedProjects.find((project) => project.slug === featuredSlug) || sortedProjects[0];
+
+  // 4. Geri kalan projeleri listele (Featured olanı listeden çıkar ki iki kere görünmesin)
+  const otherProjects = sortedProjects.filter(
+    (project) => project.slug !== featured?.slug
+  );
 
   return (
     <div className="relative pb-16">
@@ -32,95 +35,43 @@ export default async function ProjectsPage() {
       <div className="px-6 pt-20 mx-auto space-y-8 max-w-7xl lg:px-8 md:space-y-16 md:pt-24 lg:pt-32">
         <div className="max-w-2xl mx-auto lg:mx-0">
           <h2 className="text-3xl font-bold tracking-tight text-zinc-100 sm:text-4xl">
-            Projeler
+            Projelerim
           </h2>
           <p className="mt-4 text-zinc-400">
-            Yayınlanmış bazı projelerimi aşağıda bulabilirsiniz. Daha fazla proje üzerinde çalışıyorum, bu yüzden yakında daha fazlasını ekleyeceğim!
+            Mobil uygulamalar ve açık kaynak çalışmalarım.
           </p>
         </div>
+        
         <div className="w-full h-px bg-zinc-800" />
 
-        <div className="grid grid-cols-1 gap-8 mx-auto lg:grid-cols-2 ">
-          <Card>
-            <Link href={`/projects/${featured.slug}`}>
-              <article className="relative w-full h-full p-4 md:p-8">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs text-zinc-100">
-                    {featured.date ? (
-                      <time dateTime={new Date(featured.date).toISOString()}>
-                        {Intl.DateTimeFormat(undefined, {
-                          dateStyle: "medium",
-                        }).format(new Date(featured.date))}
-                      </time>
-                    ) : (
-                      <span>SOON</span>
-                    )}
-                  </div>
-                  <span className="flex items-center gap-1 text-xs text-zinc-500">
-                    {" "}
-                    {Intl.NumberFormat("en-US", { notation: "compact" }).format(
-                      0,
-                    )}
-                  </span>
-                </div>
+        {/* 1. ÖNE ÇIKAN (FEATURED) PROJE ALANI */}
+        {featured && (
+           <div className="grid grid-cols-1 gap-8 mx-auto lg:grid-cols-2 lg:gap-16">
+             <Card>
+               {/* Views değerini şimdilik 0 geçiyoruz, Redis olmadığı için */}
+               <Article project={featured} />
+             </Card>
+           </div>
+        )}
 
-                <h2
-                  id="featured-post"
-                  className="mt-4 text-3xl font-bold text-zinc-100 group-hover:text-white sm:text-4xl font-display"
-                >
-                  {featured.title}
-                </h2>
-                <p className="mt-4 leading-8 duration-150 text-zinc-400 group-hover:text-zinc-300">
-                  {featured.description}
-                </p>
-                <div className="absolute bottom-4 md:bottom-8">
-                  <p className="hidden text-zinc-200 hover:text-zinc-50 lg:block">
-                    Read more <span aria-hidden="true">&rarr;</span>
-                  </p>
-                </div>
-              </article>
-            </Link>
-          </Card>
+        {/* Ara Çizgi (Eğer başka projeler varsa göster) */}
+        {otherProjects.length > 0 && <div className="w-full h-px bg-zinc-800" />}
 
-          <div className="flex flex-col w-full gap-8 mx-auto border-t border-gray-900/10 lg:mx-0 lg:border-t-0 ">
-            {[top2, top3].map((project) => (
-              <Card key={project.slug}>
-                <Article project={project} views={0} />
-              </Card>
-            ))}
-          </div>
+        {/* 2. DİĞER PROJELER LİSTESİ */}
+        <div className="grid grid-cols-1 gap-4 mx-auto lg:mx-0 md:grid-cols-2 lg:grid-cols-3">
+          {otherProjects.map((project) => (
+            <Card key={project.slug}>
+              <Article project={project} />
+            </Card>
+          ))}
         </div>
-        <div className="hidden w-full h-px md:block bg-zinc-800" />
-
-        <div className="grid grid-cols-1 gap-4 mx-auto lg:mx-0 md:grid-cols-3">
-          <div className="grid grid-cols-1 gap-4">
-            {sorted
-              .filter((_, i) => i % 3 === 0)
-              .map((project) => (
-                <Card key={project.slug}>
-                  <Article project={project} views={0} />
-                </Card>
-              ))}
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            {sorted
-              .filter((_, i) => i % 3 === 1)
-              .map((project) => (
-                <Card key={project.slug}>
-                  <Article project={project} views={0} />
-                </Card>
-              ))}
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            {sorted
-              .filter((_, i) => i % 3 === 2)
-              .map((project) => (
-                <Card key={project.slug}>
-                  <Article project={project} views={0} />
-                </Card>
-              ))}
-          </div>
-        </div>
+        
+        {/* Hiç proje yoksa mesaj göster */}
+        {sortedProjects.length === 0 && (
+           <div className="text-center text-zinc-500 py-10">
+             Henüz eklenmiş proje yok.
+           </div>
+        )}
       </div>
     </div>
   );
