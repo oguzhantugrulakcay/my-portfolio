@@ -12,10 +12,30 @@ type Props = {
   };
 };
 
-export async function generateStaticParams(): Promise<Props["params"][]> {
+export async function generateStaticParams() {
   return allProjects
     .filter((p) => p.published)
     .map((p) => ({
       slug: p.slug,
     }));
+}
+
+export default async function ProjectPage({ params }: Props) {
+  // params'ı await ile karşılaman gerekiyor
+  const { slug } = await params;
+  
+  const project = allProjects.find((p) => p.slug === slug);
+
+  if (!project) {
+    notFound();
+  }
+
+  return (
+    <div className="bg-zinc-50 min-h-screen">
+      <Header project={project} views={0} />
+      <article className="px-4 py-12 mx-auto prose prose-zinc prose-quoteless">
+        <Mdx code={project.body.code} />
+      </article>
+    </div>
+  );
 }
